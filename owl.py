@@ -67,7 +67,7 @@ class Owl_Bot(initium.webdriver):
         ## Can print multiple messages by separating with '\n'
         # Click appropriate chat tab
         for button in Owl.find_elements_by_class_name("chat_tab"):
-            if button.text.lower() == ChatTab.lower():
+            if ChatTab.lower() in button.text.lower():
                 button.click()
         # Split Text into multiple lines by \n
         Texts = Text.split('\n')
@@ -114,7 +114,7 @@ class Owl_Bot(initium.webdriver):
         Queries = []
         # Click appropriate chat tab
         for button in Owl.find_elements_by_class_name("chat_tab"):
-            if button.text.lower() == ChatTab.lower():
+            if ChatTab.lower() in button.text.lower():
                 button.click()
         # Rebuild list of PMs, in while & try block to ensure success once loaded
         loaded = False
@@ -194,7 +194,8 @@ if __name__ == "__main__":
             #print ("Attempting to prevent \"q = query.split(\"-> \")[1] IndexError\" which occurs after every successful command, and occasionally on startup")
             while (len(authors) == 0):
                 authors, queries = Owl.update_messages("Private")
-                print(authors)
+                #print(authors)
+                time.sleep(2)
                 if (len(authors[0]) == 0):
                     authors, queries = [], []
 
