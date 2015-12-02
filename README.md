@@ -1,4 +1,4 @@
-Owl
+[![Owl](http://2.bp.blogspot.com/-GTsy_zjnqGc/UgsQGB_sfUI/AAAAAAAAAJ8/hsGWsylKsKA/s64/The_Owl_of_Minerva.png)](Owl)Owl - the free shop search bot for Initium[![Owl](http://2.bp.blogspot.com/-GTsy_zjnqGc/UgsQGB_sfUI/AAAAAAAAAJ8/hsGWsylKsKA/s64/The_Owl_of_Minerva.png)](Owl)
 ----
 
 A python based bot for the browser game [initium](http://playinitium.com/) which interfaces with players through various chat channels, with the intent of searching shops for specific items on request.
