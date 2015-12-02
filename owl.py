@@ -67,7 +67,7 @@ class Owl_Bot(initium.webdriver):
         ## Can print multiple messages by separating with '\n'
         # Click appropriate chat tab
         for button in Owl.find_elements_by_class_name("chat_tab"):
-            if ChatTab.lower() in button.text.lower():
+            if button.text.lower() == ChatTab.lower():
                 button.click()
         # Split Text into multiple lines by \n
         Texts = Text.split('\n')
@@ -153,6 +153,7 @@ if __name__ == "__main__":
     try:
         Owl = Owl_Bot()
         DEF_MAX_RESULTS = 5
+        wanted = -1 # How many results client wanted
 
         print("Current Location: " + Owl.get_location())
 
@@ -167,6 +168,7 @@ if __name__ == "__main__":
             success = False
             # Reset counter flag
             result_counter = 0
+            wanted = 0
 
             # Check location tab for "hoot" or " owl" in last message
             hootauth, hootmsg = Owl.update_messages("Location")
@@ -195,7 +197,6 @@ if __name__ == "__main__":
             while (len(authors) == 0):
                 authors, queries = Owl.update_messages("Private")
                 #print(authors)
-                time.sleep(2)
                 if (len(authors[0]) == 0):
                     authors, queries = [], []
 
@@ -211,6 +212,22 @@ if __name__ == "__main__":
                 if "find" in q.lower():
                     # Identify the item
                     goal = ' '.join(q.split("ind ")[1].split()).lower()
+                    # Check if client specified how many he wants
+                    if "find all" in q.lower():
+                        wanted = -1 # Will never fire the check statement
+                        goal = goal.split(" ")[1]
+                        print("-Client specified wanting ALL results")
+                    else:
+                        if goal[0].isdigit():
+                            wanted = int(goal.split(" ")[0])
+                            goal = goal.split(" ")[1]
+                            print("-Client specified wanting " + str(wanted) + " results")
+                        else:
+                            wanted = DEF_MAX_RESULTS
+                            print("-Assuming client wanted " + str(wanted) + " results")
+
+                    # Filter out punctuation
+                    # Note full-plate because fullplate NOT full plate
                     goal = re.sub('(?!\s)[\W_]', '', goal)
                     print("-Looking for:", goal, "")
 
@@ -241,8 +258,10 @@ if __name__ == "__main__":
                         # Now that store is open, search for the item
                         items = []
                         for i in Owl.find_elements_by_class_name("main-item-container"):
-                            current_item = i.find_elements_by_tag_name("a")[0].get_attribute("innerHTML").split(">")[1].lower()
-                            items.append(re.sub('(?!\s)[\W_]', '', current_item))
+                            if(len(i.find_elements_by_tag_name("div")) <= 0):
+                                # Item has not been sold
+                                current_item = i.find_elements_by_tag_name("a")[0].get_attribute("innerHTML").split(">")[1].lower()
+                                items.append(re.sub('(?!\s)[\W_]', '', current_item))
 
                         # If our goal is not met
                         if not any(goal in i for i in items):
@@ -266,13 +285,14 @@ if __name__ == "__main__":
                             Owl.reply(client, "Found the item here: "+url) # should be request, not client
 
                             # Mark success
-                            print("--Goal met")
+                            print("---Goal met")
                             success = True
                             ready = query
                             result_counter += 1
-                            if(result_counter == DEF_MAX_RESULTS):
+                            #print("Counter: " + result_counter + ", wanted: " + wanted)
+                            if(result_counter == wanted):
                                 break;
-                            # break # disabled so we search every shop for the item
+
 
                     ## End of operation
                     ## Tell user we're done
@@ -284,8 +304,8 @@ if __name__ == "__main__":
 
                     # Finally inform player of either successful or failed operation
                     if success:
-                        if result_counter == DEF_MAX_RESULTS:
-                            Owl.reply(client, "That should be enough for now.")
+                        if result_counter == wanted:
+                            Owl.reply(client, "There you go!")
                         else:
                             Owl.reply(client, "That's all I could find.")
                         print("-Request completed successfully.")
