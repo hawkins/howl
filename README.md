@@ -11,7 +11,7 @@ This bot was written using python3.4, and uses a firefox webdriver and selenium 
 sudo apt-get install firefox xvfb
 sudo pip3 install selenium pytz tzlocal pyvirtualdisplay
 ```
-This box is currently developed and supported on Ubuntu 14.04. 
+This box is currently developed and supported on Ubuntu 14.04.
 This bot was tested on Arch linux in its early stages, but is no longer supported on Arch and is thus no longer guaranteed to work out-of-the-box.
 
 ##Config File
@@ -33,4 +33,4 @@ Example `cfg.json`
 ./owl.py -l true
 ```
 ##Acknowledgements
-Special thanks to CptSpaceToaster for sourcing the initial codebase. Also thanks to Bella and Havok for their occasional assistance in special case testing.
+Special thanks to CptSpaceToaster for sourcing the initium module and configuration parser. Also thanks to Bella and Havok for their occasional assistance in preliminary special case testing.
