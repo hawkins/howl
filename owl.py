@@ -271,7 +271,7 @@ if __name__ == "__main__":
                                 if goal in items[-1]:
                                     # Preview, Price, and Buy Now
                                     goal_id.append(i.find_elements_by_tag_name("a")[0].get_attribute("rel").split("itemId=")[1])
-                                    goal_price.append(i.find_elements_by_xpath("..")[0].find_elements_by_tag_name("span")[0].text) # Price is in span found in parent of i, cheat and use ".." notation XPath
+                                    goal_price.append(i.find_elements_by_xpath("../span/")[0].text) # Price is in span found in parent of i, cheat and use ".." notation XPath
                                     goal_buy.append(i.find_elements_by_tag_name("a")[1].get_attribute("href"))
 
                         # If our goal is not met
@@ -281,23 +281,19 @@ if __name__ == "__main__":
 
                         # If our goal is met
                         else:
-                            url = Owl.current_url
                             # Return to main page
                             try:
                                 Owl.get("https://www.playinitium.com/main.jsp")
                             except:
                                 pass
 
-                            ## PM player
+                            # PM player
                             j = 0
                             while (result_counter != wanted) & (j > 0-len(goal_id)):
-                                Owl.reply(client, "Found Item(" + goal_id[j] + ") for " + goal_price[j] +"g. Buy: " + goal_buy[j])
+                                Owl.reply(client, "Found Item(" + goal_id[j] + ") for " + goal_price[j] +"g. [Buy Now](" + goal_buy[j] + ")")
                                 j -= 1
                                 result_counter += 1
                                 time.sleep(2) # chat ban prevention
-
-                            # Inform player of success
-                            #Owl.reply(client, "Found the item here: "+url) # should be request, not client
 
                             # Mark success
                             print("---Goal met")
@@ -352,7 +348,7 @@ if __name__ == "__main__":
                     if not success or "help" in q.lower():
                         # Tell them who we are.
                         Owl.reply(client, "Hi there! I am a shop-searching bot controlled by Rade.")
-                        Owl.reply(client, "Try asking for an item like this: find 2 ornate orcish helm")
+                        Owl.reply(client, "Try asking for an item like this: find 2 ornate orcish helm, or find all protector")
                         read = queries[0]
                         success = True
                     if success:
