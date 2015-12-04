@@ -34,7 +34,7 @@ Example `cfg.json`
 ```
 
 In typical operation, players can private message Owl to search shops for items containing a string, shown here:
-![Example image shown here](https://www.github.com/hawkins/owl/img/preview.PNG)
+![Example image shown here](https://github.com/hawkins/owl/blob/master/img/preview.PNG)
 
 ##Acknowledgements
 Special thanks to CptSpaceToaster for sourcing the initium module and configuration parser. Also thanks to Bella and Havok for their occasional assistance in preliminary special case testing.
