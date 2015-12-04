@@ -247,7 +247,7 @@ if __name__ == "__main__":
                         temp.append(each.find_elements_by_tag_name("div")[0].find_elements_by_tag_name("a")[0].get_attribute("href"))
                     merchants = temp
 
-                    # iterate through each previously made link
+                    # Iterate through each previously made link
                     for each in merchants:
                         try:
                             print("--Checking Merchant ID:" + each.split("Id=")[1])
@@ -256,12 +256,23 @@ if __name__ == "__main__":
                             print("---An error occurred while loading the merchant.")
 
                         # Now that store is open, search for the item
-                        items = []
+                        items = [] # All items in store
+                        goal_id = [] # ItemID for goal items (for preview)
+                        goal_buy = [] # buy now links to goal items
+                        goal_price = [] # prices for the goal item
+
                         for i in Owl.find_elements_by_class_name("main-item-container"):
                             if(len(i.find_elements_by_tag_name("div")) <= 0):
                                 # Item has not been sold
                                 current_item = i.find_elements_by_tag_name("a")[0].get_attribute("innerHTML").split(">")[1].lower()
                                 items.append(re.sub('(?!\s)[\W_]', '', current_item))
+
+                                # If we just added our goal
+                                if goal in items[-1]:
+                                    # Preview, Price, and Buy Now
+                                    goal_id.append(i.find_elements_by_tag_name("a")[0].get_attribute("rel").split("itemId=")[1])
+                                    goal_price.append(i.find_elements_by_xpath("..")[0].find_elements_by_tag_name("span")[0].text) # Price is in span found in parent of i, cheat and use ".." notation XPath
+                                    goal_buy.append(i.find_elements_by_tag_name("a")[1].get_attribute("href"))
 
                         # If our goal is not met
                         if not any(goal in i for i in items):
@@ -278,17 +289,20 @@ if __name__ == "__main__":
                                 pass
 
                             ## PM player
-                            # Rebuild list of PMs
-                            #authors, queries = Owl.update_messages("Private")
+                            j = 0
+                            while (result_counter != wanted) & (j > 0-len(goal_id)):
+                                Owl.reply(client, "Found Item(" + goal_id[j] + ") for " + goal_price[j] +"g. Buy: " + goal_buy[j])
+                                j -= 1
+                                result_counter += 1
+                                time.sleep(2) # chat ban prevention
 
                             # Inform player of success
-                            Owl.reply(client, "Found the item here: "+url) # should be request, not client
+                            #Owl.reply(client, "Found the item here: "+url) # should be request, not client
 
                             # Mark success
                             print("---Goal met")
                             success = True
                             ready = query
-                            result_counter += 1
                             #print("Counter: " + result_counter + ", wanted: " + wanted)
                             if(result_counter == wanted):
                                 break;
@@ -310,7 +324,7 @@ if __name__ == "__main__":
                             Owl.reply(client, "That's all I could find.")
                         print("-Request completed successfully.")
                     else:
-                        Owl.reply(client, "I couldn't find any "+goal+" in "+Owl.get_location()+".")
+                        Owl.reply(client, "I couldn't find any "+goal+" for sale in "+Owl.get_location()+".")
                         print("-Request failed.")
 
 
@@ -338,7 +352,7 @@ if __name__ == "__main__":
                     if not success or "help" in q.lower():
                         # Tell them who we are.
                         Owl.reply(client, "Hi there! I am a shop-searching bot controlled by Rade.")
-                        Owl.reply(client, "Try asking for an item like this: find ornate orcish helm")
+                        Owl.reply(client, "Try asking for an item like this: find 2 ornate orcish helm")
                         read = queries[0]
                         success = True
                     if success:
