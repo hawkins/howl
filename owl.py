@@ -271,7 +271,7 @@ if __name__ == "__main__":
                                 if goal in items[-1]:
                                     # Preview, Price, and Buy Now
                                     goal_id.append(i.find_elements_by_tag_name("a")[0].get_attribute("rel").split("itemId=")[1])
-                                    goal_price.append(i.find_elements_by_xpath("../span/")[0].text) # Price is in span found in parent of i, cheat and use ".." notation XPath
+                                    goal_price.append(i.find_elements_by_xpath("..")[0].find_elements_by_tag_name("span")[0].text) # Price is in span found in parent of i, cheat and use ".." notation XPath
                                     goal_buy.append(i.find_elements_by_tag_name("a")[1].get_attribute("href"))
 
                         # If our goal is not met

@@ -1,4 +1,5 @@
 #!/bin/bash
+cd ~/Owl
 ./owl.py $*
 while [ 1 ]
 do    
