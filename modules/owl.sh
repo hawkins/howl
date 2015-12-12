@@ -4,6 +4,7 @@ cd ~/Owl/modules
 export HOWLPATH=/home/josh/Owl
 if [ -d "$HOWLPATH" ] && [[ ":$PYTHONPATH:" != *":$HOWLPATH:"* ]]; then
     export PYTHONPATH="${PYTHONPATH:+"$PYTHONPATH:"}$HOWLPATH"
+fi
 ./owl.py $*
 while [ 1 ]
 do
