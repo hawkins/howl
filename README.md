@@ -1,4 +1,4 @@
-[![Owl](http://2.bp.blogspot.com/-GTsy_zjnqGc/UgsQGB_sfUI/AAAAAAAAAJ8/hsGWsylKsKA/s64/The_Owl_of_Minerva.png)](Owl)Owl - the free shop search bot for Initium[![Owl](http://2.bp.blogspot.com/-GTsy_zjnqGc/UgsQGB_sfUI/AAAAAAAAAJ8/hsGWsylKsKA/s64/The_Owl_of_Minerva.png)](Owl)
+[![Owl](http://2.bp.blogspot.com/-GTsy_zjnqGc/UgsQGB_sfUI/AAAAAAAAAJ8/hsGWsylKsKA/s64/The_Owl_of_Minerva.png)](Owl)Howl - the free bot framework for Initium[![Owl](http://2.bp.blogspot.com/-GTsy_zjnqGc/UgsQGB_sfUI/AAAAAAAAAJ8/hsGWsylKsKA/s64/The_Owl_of_Minerva.png)](Owl)
 ----
 
 A python based bot framework for the browser game [initium](http://playinitium.com/) which interfaces with players through various chat channels.
@@ -8,7 +8,7 @@ Do note this project is a work in progress, and as such may be a straight-up mes
 ##Modules
 Currently this project includes the following modules:
 - Owl - a shop-searching bot for providing players with requested items found in the local merchant booths.
-- Auctioneer - a bot for selling items to players for the highest price.
+- Auction - a bot for selling items to players for the highest price.
 - and more to come! Feel free to submit your own in a pull request ;)
 
 ##Dependencies

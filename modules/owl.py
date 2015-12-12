@@ -41,8 +41,8 @@ class Owl_Bot(initium.webdriver, initium.initium):
     def _parse_config(self):
         print('Parsing command line arguments')
         self._parser = argparse.ArgumentParser(description="Owl - A Python based bot for Initium - http://playinitium.com")
-        self._parser.add_argument("-c", "--config", dest="config_file", default="cfg.json",
-                                  help="Configuration to use (default=cfg.json)")
+        self._parser.add_argument("-c", "--config", dest="config_file", default="../cfg.json",
+                                  help="Configuration to use (default=../cfg.json)")
         self._parser.add_argument("-d", "--do_chat", dest="do_chat", action="store_true",
                                   help="Handle commands in each rooms local chat")
         self._parser.add_argument('-m', '--map', dest='map_file', default='map.json',

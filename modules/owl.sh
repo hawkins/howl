@@ -1,8 +1,12 @@
 #!/bin/bash
-cd ~/Owl
+cd ~/Owl/modules
+# Append to PYTHONPATH if not already in it
+export HOWLPATH=/home/josh/Owl
+if [ -d "$HOWLPATH" ] && [[ ":$PYTHONPATH:" != *":$HOWLPATH:"* ]]; then
+    export PYTHONPATH="${PYTHONPATH:+"$PYTHONPATH:"}$HOWLPATH"
 ./owl.py $*
 while [ 1 ]
-do    
+do
     secs=$((3))
 
     while [ $secs -gt 0 ]; do
