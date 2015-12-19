@@ -129,7 +129,7 @@ if __name__ == "__main__":
                     # Check if client specified how many he wants
                     if "find all" in q.lower():
                         wanted = -1 # Will never fire the check statement
-                        goal = goal.split(" ")[1]
+                        goal = " ".join(goal.split(" ")[1:])
                         print("-Client specified wanting ALL results")
                     else:
                         if goal[0].isdigit():
