@@ -4,6 +4,8 @@ import argparse
 import sys
 import os
 import time
+import logging
+from logging.handlers import TimedRotatingFileHandler
 import json
 from pyvirtualdisplay import Display
 import selenium.common.exceptions
@@ -12,6 +14,26 @@ import initium
 import string
 import re
 
+def create_timed_rotating_log(path):
+    # Create logger
+    logger = logging.getLogger("Rotating Log")
+    #logger.setLevel(logging.INFO)
+    # Create formatter
+    logFormatter = logging.Formatter("%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s] %(message)s")
+
+    # Rotating file handler
+    fileHandler = TimedRotatingFileHandler(path, when="midnight", interval=1, backupCount=5)
+    fileHandler.setFormatter(logFormatter)
+    logger.addHandler(fileHandler)
+
+    # Console output handler
+    consoleHandler = logging.StreamHandler()
+    consoleHandler.setFormatter(logFormatter)
+    logger.addHandler(consoleHandler)
+
+    return logger
+
+def log()
 
 class Owl_Bot(initium.webdriver, initium.initium):
     def __init__(self):
@@ -59,23 +81,30 @@ class Owl_Bot(initium.webdriver, initium.initium):
             with open(self.args.config_file, encoding="utf-8") as data_file:
                 return json.loads(data_file.read())
         else:
-            print("Error: Config: {0} not found".format(self.args.config_file))
+            logger.error("Error: Config: {0} not found".format(self.args.config_file))
             sys.exit(1)
 
 
 if __name__ == "__main__":
+    log_file = "../logs/owl.log"
+    logger = create_timed_rotating_log(log_file)
+
+    # DEBUG
+    logger.info("This is a test")
+    time.sleep(75)
+
     try:
         Owl = Owl_Bot()
         DEF_MAX_RESULTS = 5
         wanted = -1 # How many results client wanted
 
-        print("Current Location: " + Owl.get_location())
+        logger.info("Current Location: " + Owl.get_location())
 
         # Download messages
         auths, texts = Owl.update_messages("Private")
         read = texts[0] # save latest message as read for base case
-        print("Marking read as \"" + read + "\"")
-        print("Now listening for requests")
+        logger.info("Marking read as \"" + read + "\"")
+        logger.info("Now listening for requests")
 
         while True:
             # Reset success tag for user interaction
@@ -90,11 +119,11 @@ if __name__ == "__main__":
                 if "Hoot hoot! I am Owl. PM me to search shops!" not in each:
                     if "hoot" in each.lower():
                         Owl.say("Location", "Hoot hoot! I am Owl. PM me to search shops!")
-                        print("Completed hoot request!")
+                        logger.info("Completed hoot request!")
                         break
                     if " owl" in each.lower():
                         Owl.say("Location", "Hoot hoot! I am Owl. PM me to search shops!")
-                        print("Completed hoot request!")
+                        logger.info("Completed hoot request!")
                         break
                 else:
                     break
@@ -118,7 +147,7 @@ if __name__ == "__main__":
             if (queries[0] != read) and (authors[0] != '[Bot] Owl'):
                 query = queries[0]
                 q = query.split("-> ")[1] # get text after to/from info
-                print("Query received from ", authors[0], ": ", q)
+                logger.info("Query received from ", authors[0], ": ", q)
 
                 # Get a WebElement of the player who requested Owl
                 client = Owl.find_elements_by_xpath('//div[@id="chat_messages_PrivateChat"]/div')[0].find_elements_by_class_name("chatMessage-text")[0]
@@ -130,20 +159,20 @@ if __name__ == "__main__":
                     if "find all" in q.lower():
                         wanted = -1 # Will never fire the check statement
                         goal = " ".join(goal.split(" ")[1:])
-                        print("-Client specified wanting ALL results")
+                        logger.info("-Client specified wanting ALL results")
                     else:
                         if goal[0].isdigit():
                             wanted = int(goal.split(" ")[0])
                             goal = goal.split(" ")[1]
-                            print("-Client specified wanting " + str(wanted) + " results")
+                            logger.info("-Client specified wanting " + str(wanted) + " results")
                         else:
                             wanted = DEF_MAX_RESULTS
-                            print("-Assuming client wanted " + str(wanted) + " results")
+                            logger.warning("-Assuming client wanted " + str(wanted) + " results")
 
                     # Filter out punctuation
                     # Note full-plate because fullplate NOT full plate
                     goal = re.sub('(?!\s)[\W_]', '', goal)
-                    print("-Looking for:", goal, "")
+                    logger.info("-Looking for:", goal, "")
 
                     # Say "I'll get right on that!"
                     Owl.reply(client, "I'll get right on that!")
@@ -164,10 +193,10 @@ if __name__ == "__main__":
                     # Iterate through each previously made link
                     for each in merchants:
                         try:
-                            print("--Checking Merchant ID:" + each.split("Id=")[1])
+                            logger.info("--Checking Merchant ID:" + each.split("Id=")[1])
                             Owl.get(each)
                         except:
-                            print("---An error occurred while loading the merchant.")
+                            logger.error("---An error occurred while loading the merchant.")
 
                         # Now that store is open, search for the item
                         items = [] # All items in store
@@ -210,7 +239,7 @@ if __name__ == "__main__":
                                 time.sleep(2) # chat ban prevention
 
                             # Mark success
-                            print("---Goal met")
+                            logger.info("---Goal met")
                             success = True
                             ready = query
                             #print("Counter: " + result_counter + ", wanted: " + wanted)
@@ -232,16 +261,16 @@ if __name__ == "__main__":
                             Owl.reply(client, "There you go!")
                         else:
                             Owl.reply(client, "That's all I could find.")
-                        print("-Request completed successfully.")
+                        logger.info("-Request completed successfully.")
                     else:
                         Owl.reply(client, "I couldn't find any "+goal+" for sale in "+Owl.get_location()+".")
-                        print("-Request failed.")
+                        logger.warning("-Request failed.")
 
 
                 # Request for information
                 else:
                     if "HCF.NOW" in q:
-                        print("********\nHALT FLAG RECEIVED\n********")
+                        logger.info("********\nHALT FLAG RECEIVED\n********")
                         sys.exit()
                     if not success and "where" in q.lower():
                         # Tell them where we are.
@@ -266,10 +295,10 @@ if __name__ == "__main__":
                         read = queries[0]
                         success = True
                     if success:
-                        print("Request completed succesfully.")
+                        logger.info("Request completed succesfully.")
 
 
-        print("OUTSIDE WHILE TRUE LOOP!")
+        logger.info("OUTSIDE WHILE TRUE LOOP!")
 
 
 
@@ -278,6 +307,6 @@ if __name__ == "__main__":
         if type(e) is KeyboardInterrupt:
             print("")
         if type(e) is ConnectionRefusedError:
-            print("Connection to the Firefox Webdriver was lost")
+            logger.error("Connection to the Firefox Webdriver was lost")
         print("Exiting")
         sys.exit(0)
