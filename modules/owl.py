@@ -17,9 +17,9 @@ import re
 def create_timed_rotating_log(path):
     # Create logger
     logger = logging.getLogger("Rotating Log")
-    #logger.setLevel(logging.INFO)
+    logger.setLevel(logging.INFO)
     # Create formatter
-    logFormatter = logging.Formatter("%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s] %(message)s")
+    logFormatter = logging.Formatter("%(asctime)s [%(levelname)-5.5s] %(message)s")
 
     # Rotating file handler
     fileHandler = TimedRotatingFileHandler(path, when="midnight", interval=1, backupCount=5)
@@ -33,20 +33,19 @@ def create_timed_rotating_log(path):
 
     return logger
 
-def log()
 
 class Owl_Bot(initium.webdriver, initium.initium):
     def __init__(self):
         self.cfg = self._parse_config()
 
-        print("Initializing webdriver")
+        logger.info("Initializing webdriver")
         # Hax
         super().__init__()
 
-        print("Connecting to Initium")
+        logger.info("Connecting to Initium")
         self.get("http://www.playinitium.com")
 
-        print("Logging in as {0}".format(self.cfg["uname"]))
+        logger.info("Logging in as {0}".format(self.cfg["uname"]))
         # Enter email
         login = self.find_element_by_name("email")
         login.send_keys(self.cfg["email"])
@@ -61,7 +60,7 @@ class Owl_Bot(initium.webdriver, initium.initium):
                 button.click()
 
     def _parse_config(self):
-        print('Parsing command line arguments')
+        logger.info('Parsing command line arguments')
         self._parser = argparse.ArgumentParser(description="Owl - A Python based bot for Initium - http://playinitium.com")
         self._parser.add_argument("-c", "--config", dest="config_file", default="../cfg.json",
                                   help="Configuration to use (default=../cfg.json)")
@@ -75,7 +74,7 @@ class Owl_Bot(initium.webdriver, initium.initium):
             display = Display(visible=0, size=(800,600))
             display.start()
 
-        print("Reading config")
+        logger.info("Reading config")
 
         if os.path.isfile(self.args.config_file):
             with open(self.args.config_file, encoding="utf-8") as data_file:
@@ -88,10 +87,6 @@ class Owl_Bot(initium.webdriver, initium.initium):
 if __name__ == "__main__":
     log_file = "../logs/owl.log"
     logger = create_timed_rotating_log(log_file)
-
-    # DEBUG
-    logger.info("This is a test")
-    time.sleep(75)
 
     try:
         Owl = Owl_Bot()
