@@ -168,6 +168,13 @@ if __name__ == "__main__":
                     # Filter out punctuation
                     # Note full-plate because fullplate NOT full plate
                     goal = re.sub('(?!\s)[\W_]', '', goal)
+
+                    # Ensure goal is not blank ('the Ravager fault')
+                    if not goal:
+                        logger.warning("-Client requested null goal")
+                        Owl.reply(client, "Sorry, I don't understand. Did you forget a space?")
+                        continue
+
                     logger.info("-Looking for:" + goal + "")
 
                     # Say "I'll get right on that!"
@@ -272,18 +279,26 @@ if __name__ == "__main__":
 
                 # Request for information
                 else:
+                    # Prepare to write statistics to CSV
+                    csvFile = open("../logs/stats_requests.csv", 'a')
+                    writer = csv.writer(csvFile)
                     if "HCF.NOW" in q:
-                        logger.info("********\nHALT FLAG RECEIVED\n********")
+                        logger.warning("HALT FLAG RECEIVED")
+                        data = [[time.asctime(), authors[0], "HCF.NOW", q]]
+                        writer.writerows(data)
+                        csvFile.close()
                         sys.exit()
                     if not success and "where" in q.lower():
                         # Tell them where we are.
                         Owl.reply(client, "I am currently in "+Owl.get_location())
                         read = queries[0]
                         success = True
+                        data = [[time.asctime(), authors[0], "where", q]]
                     if not success and "thank" in q.lower():
                         Owl.reply(client, "You're welcome! :)")
                         read = queries[0]
                         success = True
+                        data = [[time.asctime(), authors[0], "thanks", q]]
                     if not success and "love you" in q.lower():
                         if authors[0] == "DiqFuqis" or authors[0] == "Eliona" or authors[0] == "Aliona":
                             Owl.reply(client, "<3")
@@ -291,17 +306,21 @@ if __name__ == "__main__":
                             Owl.reply(client, "Sorry, I'm taken. But you're sweet!")
                         read = queries[0]
                         success = True
+                        data = [[time.asctime(), authors[0], "love", q]]
                     if not success or "help" in q.lower():
                         # Tell them who we are.
                         Owl.reply(client, "Hi there! I am a shop-searching bot controlled by Rade.")
                         Owl.reply(client, "Try asking for an item like this: find 2 ornate orcish helm, or find all protector")
                         read = queries[0]
                         success = True
+                        data = [[time.asctime(), authors[0], "help", q]]
                     if success:
                         logger.info("Request completed succesfully.")
+                    writer.writerows(data)
+                    csvFile.close()
 
 
-        logger.info("OUTSIDE WHILE TRUE LOOP!")
+        logger.error("OUTSIDE WHILE TRUE LOOP!")
 
 
 
