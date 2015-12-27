@@ -5,6 +5,7 @@ import sys
 import os
 import time
 import logging
+import csv
 from logging.handlers import TimedRotatingFileHandler
 import json
 from pyvirtualdisplay import Display
@@ -142,7 +143,7 @@ if __name__ == "__main__":
             if (queries[0] != read) and (authors[0] != '[Bot] Owl'):
                 query = queries[0]
                 q = query.split("-> ")[1] # get text after to/from info
-                logger.info("Query received from ", authors[0], ": ", q)
+                logger.info("Query received from " + authors[0] + ": " + q)
 
                 # Get a WebElement of the player who requested Owl
                 client = Owl.find_elements_by_xpath('//div[@id="chat_messages_PrivateChat"]/div')[0].find_elements_by_class_name("chatMessage-text")[0]
@@ -167,7 +168,7 @@ if __name__ == "__main__":
                     # Filter out punctuation
                     # Note full-plate because fullplate NOT full plate
                     goal = re.sub('(?!\s)[\W_]', '', goal)
-                    logger.info("-Looking for:", goal, "")
+                    logger.info("-Looking for:" + goal + "")
 
                     # Say "I'll get right on that!"
                     Owl.reply(client, "I'll get right on that!")
@@ -260,6 +261,13 @@ if __name__ == "__main__":
                     else:
                         Owl.reply(client, "I couldn't find any "+goal+" for sale in "+Owl.get_location()+".")
                         logger.warning("-Request failed.")
+
+                    ## Write statistics to CSV
+                    with open("../logs/stats.csv", 'a') as csvFile:
+                        writer = csv.writer(csvFile)
+                        data = [[time.asctime(), authors[0], goal, wanted, result_counter]]
+                        writer.writerows(data)
+                        csvFile.close()
 
 
                 # Request for information
