@@ -101,19 +101,14 @@ class initium(object):
                     try:
                         Authors.append(each.find_elements_by_class_name("chatMessage-text")[0].text)
                         Queries.append(each.find_elements_by_class_name("chatMessage-text")[1].text)
-                    except KeyboardInterrupt:
-                        print("Received KeyboardInterrupt")
-                        sys.exit()
                     except:
-                        print("Did a DEV pm us?")
-                        # Following snippet designed to fit Bella's somewhat arbitraary standards
-                        Authors.append(each.find_elements_by_class_name("chatMessage-text")[0].find_elements_by_xpath('//a//font/span').text)
-                        Queries.append(each.find_elements_by_class_name("chatMessage-text")[1].text)
+                        print("An exception occurred, closing...")
+                        return 0 # return 0 to terminate the module (TyoeError: int is not iterable)
                 Queries[0] # Generates IndexError if messages not yet loaded
                 loaded = True
             except:
                 pass
         loaded = False
 
-        # Ugh... Wish we could return by reference more simply
+        # Wish we could return by reference more simply
         return [Authors, Queries]

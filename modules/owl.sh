@@ -1,7 +1,7 @@
 #!/bin/bash
-cd ~/Owl/modules
+cd ~/howl/modules
 # Append to PYTHONPATH if not already in it
-export HOWLPATH=/home/josh/Owl
+export HOWLPATH=/home/josh/howl
 if [ -d "$HOWLPATH" ] && [[ ":$PYTHONPATH:" != *":$HOWLPATH:"* ]]; then
     export PYTHONPATH="${PYTHONPATH:+"$PYTHONPATH:"}$HOWLPATH"
 fi
