@@ -93,6 +93,7 @@ if __name__ == "__main__":
         Owl = Owl_Bot()
         DEF_MAX_RESULTS = 5
         wanted = -1 # How many results client wanted
+        stats = None # Desired stats (weapon attack 0d0/0d00)
 
         logger.info("Current Location: " + Owl.get_location())
 
@@ -124,15 +125,8 @@ if __name__ == "__main__":
                 else:
                     break
 
-            # DEBUG
-            #print("Q[0]: " + queries[0])
-            #print("Read: " + read)
-            #print("A[0]: " + authors[0])
-
             # Rebuild list of PMs
             authors, queries = [], []
-
-            #print ("Attempting to prevent \"q = query.split(\"-> \")[1] IndexError\" which occurs after every successful command, and occasionally on startup")
             while (len(authors) == 0):
                 authors, queries = Owl.update_messages("Private")
                 #print(authors)
@@ -164,6 +158,14 @@ if __name__ == "__main__":
                         else:
                             wanted = DEF_MAX_RESULTS
                             logger.warning("-Assuming client wanted " + str(wanted) + " results")
+
+                    ## Did they specify weapon attack? (0d0 or 0d00)
+                    wep_pat_1 = re.compile("[0-9]d[0-9]")
+                    wep_pat_2 = re.compile("[0-9]d[0-9][0-9]")
+                    for each in goal:
+                        if wep_pat_1.match(each) or wep_pat_2.match(each):
+                            stats = each
+                            logger.info("-Client specified wanting only " + stats + " items")
 
                     # Filter out punctuation
                     # Note full-plate because fullplate NOT full plate
@@ -215,14 +217,25 @@ if __name__ == "__main__":
 
                                 # If we just added our goal
                                 if goal in items[-1]:
-                                    # Preview, Price, and Buy Now
-                                    goal_id.append(i.find_elements_by_tag_name("a")[0].get_attribute("rel").split("itemId=")[1])
-                                    goal_price.append(i.find_elements_by_xpath("..")[0].find_elements_by_tag_name("span")[0].text) # Price is in span found in parent of i, cheat and use ".." notation XPath
-                                    goal_buy.append(i.find_elements_by_tag_name("a")[1].get_attribute("href"))
+                                    match = False
+                                    # Check if stats match
+                                    if stats:
+                                        i.find_elements_by_tag_name("a")[0].click()
+                                        elements = Owl.find_elements_by_class_name("main-item-subnote")
+                                        if elements[0].get_attribute("innerHTML") == stats:
+                                            # Item stats match
+                                            match = True
+                                    else:
+                                        match = True
+                                    if match:
+                                        # Preview, Price, and Buy Now
+                                        goal_id.append(i.find_elements_by_tag_name("a")[0].get_attribute("rel").split("itemId=")[1])
+                                        goal_price.append(i.find_elements_by_xpath("..")[0].find_elements_by_tag_name("span")[0].text) # Price is in span found in parent of i, cheat and use ".." notation XPath
+                                        goal_buy.append(i.find_elements_by_tag_name("a")[1].get_attribute("href"))
 
                         # If our goal is not met
                         if not any(goal in i for i in items):
-                            #print("--Goal not met, checking next page")
+                            #logger.warning("--Goal not met, checking next page")
                             continue
 
                         # If our goal is met
