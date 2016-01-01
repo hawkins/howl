@@ -109,6 +109,7 @@ if __name__ == "__main__":
             # Reset counter flag
             result_counter = 0
             wanted = 0
+            stats = None
 
             # Check location tab for "hoot" or " owl" in last message
             hootauth, hootmsg = Owl.update_messages("Location")
@@ -144,7 +145,7 @@ if __name__ == "__main__":
 
                 if "find" in q.lower():
                     # Identify the item
-                    goal = ' '.join(q.split("ind ")[1].split()).lower()
+                    goal = ' '.join(q.split("ind ", 1)[1].split()).lower()
                     # Check if client specified how many he wants
                     if "find all" in q.lower():
                         wanted = -1 # Will never fire the check statement
@@ -152,20 +153,26 @@ if __name__ == "__main__":
                         logger.info("-Client specified wanting ALL results")
                     else:
                         if goal[0].isdigit():
-                            wanted = int(goal.split(" ")[0])
-                            goal = goal.split(" ")[1]
-                            logger.info("-Client specified wanting " + str(wanted) + " results")
+                            try:
+                                wanted = int(goal.split(" ")[0])
+                                logger.info("-Client specified wanting " + str(wanted) + " results")
+                            except:
+                                # Found the damage modifier, so client didn't specify quantity wanted.
+                                wanted = DEF_MAX_RESULTS
+                                logger.warning("-Assuming client wanted " + str(wanted) + " results")
+                            goal = goal.split(" ")[1:]
                         else:
                             wanted = DEF_MAX_RESULTS
                             logger.warning("-Assuming client wanted " + str(wanted) + " results")
 
-                    ## Did they specify weapon attack? (0d0 or 0d00)
-                    wep_pat_1 = re.compile("[0-9]d[0-9]")
-                    wep_pat_2 = re.compile("[0-9]d[0-9][0-9]")
-                    for each in goal:
-                        if wep_pat_1.match(each) or wep_pat_2.match(each):
-                            stats = each
-                            logger.info("-Client specified wanting only " + stats + " items")
+                    ## Did they specify weapon attack?
+                    if not isinstance(goal, str):
+                        goal = " ".join(goal)
+                    wep_pat = re.compile("[0-9]d[0-9]+")
+                    if re.search(wep_pat, goal):
+                        stats = re.search(wep_pat, goal).group()
+                        goal = re.sub(wep_pat, '', goal).strip()
+                        logger.info("-Client specified wanting " + stats + " items")
 
                     # Filter out punctuation
                     # Note full-plate because fullplate NOT full plate
@@ -212,23 +219,31 @@ if __name__ == "__main__":
                         for i in Owl.find_elements_by_class_name("main-item-container"):
                             if(len(i.find_elements_by_tag_name("div")) <= 0):
                                 # Item has not been sold
+                                # Get the item element
                                 current_item = i.find_elements_by_tag_name("a")[0].get_attribute("innerHTML").split(">")[1].lower()
-                                items.append(re.sub('(?!\s)[\W_]', '', current_item))
 
-                                # If we just added our goal
-                                if goal in items[-1]:
+                                # If we found our goal
+                                if goal in re.sub('(?!\s)[\W_]', '', current_item):
                                     match = False
                                     # Check if stats match
                                     if stats:
                                         i.find_elements_by_tag_name("a")[0].click()
-                                        elements = Owl.find_elements_by_class_name("main-item-subnote")
-                                        if elements[0].get_attribute("innerHTML") == stats:
-                                            # Item stats match
-                                            match = True
+                                        # Ensure the popup loads but we don't wait too long
+                                        loaded = False
+                                        while not loaded:
+                                            try:
+                                                elements = Owl.find_elements_by_class_name("main-item-subnote")
+                                                if elements[0].get_attribute("innerHTML").lower() == stats:
+                                                    # Item stats match
+                                                    match = True
+                                                loaded = True
+                                            except:
+                                                pass
                                     else:
                                         match = True
                                     if match:
                                         # Preview, Price, and Buy Now
+                                        items.append(re.sub('(?!\s)[\W_]', '', current_item))
                                         goal_id.append(i.find_elements_by_tag_name("a")[0].get_attribute("rel").split("itemId=")[1])
                                         goal_price.append(i.find_elements_by_xpath("..")[0].find_elements_by_tag_name("span")[0].text) # Price is in span found in parent of i, cheat and use ".." notation XPath
                                         goal_buy.append(i.find_elements_by_tag_name("a")[1].get_attribute("href"))
@@ -279,13 +294,16 @@ if __name__ == "__main__":
                             Owl.reply(client, "That's all I could find.")
                         logger.info("-Request completed successfully.")
                     else:
-                        Owl.reply(client, "I couldn't find any "+goal+" for sale in "+Owl.get_location()+".")
+                        if not stats:
+                            Owl.reply(client, "I couldn't find any "+goal+" for sale in "+Owl.get_location()+".")
+                        else:
+                            Owl.reply(client, "I couldn't find any "+stats+" "+goal+"for sale in "+Owl.get_location()+".")
                         logger.warning("-Request failed.")
 
                     ## Write statistics to CSV
                     with open("../logs/stats.csv", 'a') as csvFile:
                         writer = csv.writer(csvFile)
-                        data = [[time.asctime(), authors[0], goal, wanted, result_counter]]
+                        data = [[time.asctime(), authors[0], goal, stats,  wanted, result_counter]]
                         writer.writerows(data)
                         csvFile.close()
 
