@@ -331,7 +331,7 @@ if __name__ == "__main__":
                         success = True
                         data = [[time.asctime(), authors[0], "thanks", q]]
                     if not success and "love you" in q.lower():
-                        if authors[0] == "DiqFuqis" or authors[0] == "Eliona" or authors[0] == "Aliona":
+                        if authors[0] == "Hyren" or authors[0] == "Eliona" or authors[0] == "Aliona":
                             Owl.reply(client, "<3")
                         else:
                             Owl.reply(client, "Sorry, I'm taken. But you're sweet!")

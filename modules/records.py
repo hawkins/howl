@@ -84,32 +84,96 @@ class Records(initium.webdriver, initium.initium):
             logger.error("Error: Config: {0} not found".format(self.args.config_file))
             sys.exit(1)
 
+    def score_item(self):
+        ## Score any item by determining its type and calling appropriate functions
+        # Sleep for a time to ensure page has updated with new item info
+        time.sleep(2)
+        # Define Variables
+        score = -1
+        ## First determine what type of item it is
+        # Check <p> tag in popup
+        paragraph_element = self.find_elements_by_xpath('//div[contains(@class,"cluetip-inner") and contains(@class, "ui-widget-content") and contains(@class, "ui-cluetip-content")]/div[@class="main-page"]/p')[0]
+        #paragraph_element = paragraph_element.find_elements_by_class_name("main-page")[0].find_elements_by_tag_name("p")[0]
+        paragraph_text = paragraph_element.get_attribute("innerHTML").lower()
+        # Weapon or Armor?
+        if "weapon" in paragraph_text:
+            score = self.calculate_score_weapon()
+        else:
+            if "armor" in paragraph_text:
+                if "shirt" in paragraph_text:
+                    score = self.calculate_score_armor(shirt=True)
+                else:
+                    score = self.calculate_score_armor(shirt=False)
+            else:
+                # Not weapon or armor so we don't score it!
+                logger.warning("Ignoring non-equipment item.") # Score remains -1
+        return score
+
+    def calculate_score_armor(self, chance=0, reduction=0, penalty=0, shirt=False):
+        ## Calculates an armor's score based on block chance, damage reduction, and dexterity penalty
+        ## Note this calculation varies if a shirt is tested
+        start = time.time()
+        DEF_MAX_RUNTIME = 14.9
+        loaded = False
+        while not loaded:
+            try:
+                # Check if we've run for too long
+                end = time.time()
+                if end-start > DEF_MAX_RUNTIME:
+                    logger.warning("Score calculation timed out!")
+                    return -1
+                # Build stat list
+                elements = self.find_elements_by_class_name("main-item-subnote")
+                chance = int(elements[0].get_attribute("innerHTML").split("%")[0])
+                reduction = int(elements[1].get_attribute("innerHTML"))
+                penalty = int(elements[2].get_attribute("innerHTML").split("%")[0])
+                loaded = True
+            except e:
+                logger.error(e)
+                return -1
+        ## Actual calculation
+        # Is the item a shirt?
+        if shirt:
+            score = 1.7 * ((chance / (penalty + 1.0))) * (reduction / 13.33)
+        else:
+            # Must be normal armor then
+            score = chance * (reduction / 25) - penalty # probably should be more complex
+        return score
+
     # @timeout(60)
-    def calculate_score_weapon(self=0, dice=0, sides=0, chance=0, mult=0):
-        ## Calculates a weapon's score based on damaeg and critical stats
+    def calculate_score_weapon(self, dice=0, sides=0, chance=0, mult=0):
+        ## Calculates a weapon's score based on damage and critical stats
         # Ensure the popup loads but we don't wait too long
         start = time.time()
         DEF_MAX_RUNTIME = 14.9
         loaded = False
         while not loaded:
             try:
+                # Check if we've run for too long
                 end = time.time()
                 if end-start > DEF_MAX_RUNTIME:
                     logger.warning("Score calculation timed out!")
                     return -1
+                # Build stat list
                 elements = self.find_elements_by_class_name("main-item-subnote")
                 damage = elements[0].get_attribute("innerHTML").split("D")
+                # Is this actually a block chance stat and thus armor piece?
+                if "%" in damage:
+                    logger.warning("Inspected armor as weapon!")
+                    return self.calculate_score_armor() # Call armor instead
                 try:
                     dice = int(damage[0])
                 except ValueError:
-                    logger.warning("Inspected armor item!")
+                    #logger.warning("Inspected armor item!")
                     return -1
+                # Looks like a weapon, go on
                 sides = int(damage[1])
                 chance = float(elements[1].get_attribute("innerHTML").split("%")[0])
                 mult = float(elements[2].get_attribute("innerHTML").split("x")[0])
                 loaded = True
             except:
                 pass
+        # Actual calculation
         score = dice + 0.4 * math.pow((dice * sides), 1.5) * (mult / 4.0) * math.pow(2.2, (1.0+(chance*3/100.0)))
         return score
 
@@ -171,6 +235,8 @@ if __name__ == "__main__":
     logger = create_timed_rotating_log(main_log_file)
 
     Bot = Records()
+    # Solve for default score in case of bugs
+    #DEF_LOWEST_SCORE = Bot.calculate_score_weapon(0, 0, 0, 0, 0, 0)
     logger.info("Now listening for item shares")
 
     while True:
@@ -188,13 +254,19 @@ if __name__ == "__main__":
                 # so for now, DO NOT CLICK if it says share
                 if link.get_attribute("innerHTML") != "Share":
                     link.click()
-            except ElementNotVisibleException:
+            except ElementNotVisibleException as e:
+                #logger.error(str(e))
                 logger.warning("Item not visible, updating messages instead.")
+                break
+            except StaleElementReferenceException as e:
+                logger.error(str(e))
+                logger.error("StaleElementReferenceException occurred! ! ! !")
+                logger.error("Updating messages instead...")
                 break
 
             # Calculate score of popup item
-            score = Bot.calculate_score_weapon()
-            if score == -1:
+            score = Bot.score_item()
+            if float(score) <= 2.0 or float(score) >= 300.0: # 1.64 default, 300 never been seen
                 # Inspecetd item was not a weapon, so skip to next item
                 continue
             # Get item ID from "rel="viewitemmini.jsp?itemId=4961250779856896"
@@ -206,11 +278,31 @@ if __name__ == "__main__":
             # Save the item
             result = Bot.save_records(item_name, itemID, score)
             if result != -1:
-                logger.info("Saved " + original_item_name + " in resulting index " +str(result))
+                logger.info("Found #" + str(result+1) + " "+ original_item_name + "score: " + str(score))
+            author_element = link.find_elements_by_xpath('../../..')[0].find_elements_by_tag_name("span")[1].find_elements_by_tag_name("a")[0]
             if result == 0:
-                # Best of its kind
-                author_element = link.find_elements_by_xpath('../../..')[0].find_elements_by_tag_name("span")[1].find_elements_by_tag_name("a")[0]
+                ## Best of its kind
+                # Get author name
                 author = author_element.get_attribute("innerHTML")
-                Bot.say("Global", author+" has just discovered the best "+original_item_name+", with a score of "+"{:10.2f}".format(score) + "!" )
+                # Announce in global chat and private message
+                Bot.say("Global", author+" discovered the best Item("+itemID+"), with a score of "+"{:10.2f}".format(score) + "!" )
+                time.sleep(0.5) # Avoiding chat ban
+                Bot.reply(author_element, "Your Item(" + itemID + ") is the BEST so far!! Score: " + "{:10.2f}".format(score) + "!" )
+            if result == 1:
+                # Whisper author
+                Bot.reply(author_element, "Your Item(" + itemID + ") is the 2nd best! Score: " + "{:10.2f}".format(score) + "!" )
+            if result == 2:
+                # Whisper author
+                Bot.reply(author_element, "Your Item(" + itemID + ") is the 3rd best! Score: " + "{:10.2f}".format(score) + "!" )
+
+        ## Listen for requests in Global chat
+        ## "Best itemnamegoeshere" or "#1 itemnamegoeshere" or "#2 itemnamegoeshere" or "#3 itemnamegoeshere"
+        #authors, messages = Bot.update_messages("Global")
+        #for each in messages[:15]:
+            # If string matches regex pattern for #1 or best
+            # #2
+            # #3
+
+
 
     logger.error("OUTSIDE WHILE TRUE LOOP!")
