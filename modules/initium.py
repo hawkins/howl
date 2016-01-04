@@ -112,3 +112,85 @@ class initium(object):
 
         # Wish we could return by reference more simply
         return [Authors, Queries]
+
+    def get_item_stats(self):
+        ## Read popup HTML and return a dictionary of all item stats
+        stat_dictionary = {
+                            'Dice Quantity': 0,
+                            'Dice Sides': 0,
+                            'Critical Chance': 0.00,
+                            'Critical Multiplier': 0,
+                            'Block Chance': 0,
+                            'Damage Reduction': 0,
+                            'Dexterity Penalty': 0,
+                            'Item Type': None
+                            }
+        # Sleep 2 seconds for page load
+        time.sleep(2)
+
+        ## First determine what type of item it is
+        # Check <p> tag in popup
+        paragraph_element = self.find_elements_by_xpath('//div[contains(@class,"cluetip-inner") and contains(@class, "ui-widget-content") and contains(@class, "ui-cluetip-content")]/div[@class="main-page"]/p')[0]
+        #paragraph_element = paragraph_element.find_elements_by_class_name("main-page")[0].find_elements_by_tag_name("p")[0]
+        paragraph_text = paragraph_element.get_attribute("innerHTML").lower()
+        # Weapon or Armor?
+        if "weapon" in paragraph_text:
+            stat_dictionary['Item Type'] = "Weapon"
+        else:
+            if "armor" in paragraph_text:
+                if "shirt" in paragraph_text:
+                    stat_dictionary['Item Type'] = "Shirt Armor"
+                else:
+                    stat_dictionary['Item Type'] = "Armor"
+            else:
+                if "shield" in paragraph_text:
+                    stat_dictionary['Item Type'] = "Shield"
+                else:
+                    stat_dictionary['Item Type'] = "Non-equipment"
+                    # If it is not equipment then this function is useless.
+                    return
+
+        # Build stat list
+        elements = self.find_elements_by_class_name("main-item-subnote")
+
+        ## Armor Stats
+        if "Armor" in stat_dictionary['Item Type'] or "Shield" in stat_dictionary['Item Type']:
+            ## Try to solve block chance
+            try:
+                stat_dictionary['Block Chance'] = int(elements[0].get_attribute("innerHTML").split("%")[0])
+            except Exception as e:
+                print("Error: " + str(e))
+            ## Try to solve damage Reduction
+            try:
+                stat_dictionary['Damage Reduction'] = int(elements[1].get_attribute("innerHTML"))
+            except Exception as e:
+                print("Error: " + str(e))
+            ## Try to solve dexterity penalty
+            try:
+                stat_dictionary['Dexterity Penalty'] = int(elements[2].get_attribute("innerHTML").split("%")[0])
+            except Exception as e:
+                print("Error: " + str(e))
+
+        ## Weapon Stats
+        if "Weapon" in stat_dictionary['Item Type']:
+            ## Try to solve dice quantity
+            try:
+                stat_dictionary['Dice Quantity'] = int(elements[0].get_attribute("innerHTML").split("D")[0])
+            except Exception as e:
+                print("Error: " + str(e))
+            ## Try to solve dice sides
+            try:
+                stat_dictionary['Dice Sides'] = int(elements[0].get_attribute("innerHTML").split("D")[1])
+            except Exception as e:
+                print("Error: " + str(e))
+            ## Try to solve critical chance
+            try:
+                stat_dictionary['Critical Chance'] = float(elements[1].get_attribute("innerHTML").split("%")[0])
+            except Exception as e:
+                print("Error: " + str(e))
+            ## Try to solve critical Multiplier
+            try:
+                stat_dictionary['Critical Multiplier'] = float(elements[2].get_attribute("innerHTML").split("x")[0])
+            except Exception as e:
+                print("Error: " + str(e))
+        return stat_dictionary
