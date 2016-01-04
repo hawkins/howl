@@ -5,6 +5,7 @@
 
 Welcome to Howl's documentation!
 ================================
+Howl is a python-based bot framework for the web game Initium. Making bots with Howl is easy! Check out the following pages to begin.
 
 Contents:
 
@@ -22,4 +23,3 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
-
