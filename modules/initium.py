@@ -9,7 +9,28 @@ import time
 webdriver = Firefox
 
 class initium(object):
+    """
+    This is the core Howl framework object.
+
+    All bot modules should inerhit from this class by using:
+
+    >>> class Bot(initium.webdriver, initium.initium): # Class definition line for Bot implementing Howl framework
+    """
     def get_location(self):
+        """
+        This function returns the current location of the bot in the Initium world.
+
+        Args:
+           None: This function takes no arguments
+
+        Returns:
+           Location (string) -- Either actual location or "Unknown Location" if location could not be found.
+
+        One way to use this function is:
+
+        >>> print("Location: " + Bot.get_location())
+        Location: Aera
+        """
         try:
             elem = self.find_element_by_class_name("header-location")
             if elem:
@@ -17,11 +38,24 @@ class initium(object):
                     return elem.text
         except NoSuchElementException:
             # Not found
-            pass
+            return "Unknown Location"
     Firefox.get_location = get_location
 
 
     def get_gold(self):
+        """This function returns the current gold in the bot's inventory in the Initium game.
+
+        Args:
+           None: This function takes no arguments
+
+        Returns:
+           Gold (string) -- Either actual gold or "-1" if gold could quantitiy not be found.
+
+        One way to use this function is:
+
+        >>> print("Gold: " + Bot.get_gold())
+        Gold: 9,873
+        """
         try:
             elem = self.find_element_by_class_name("header-stats")
             if elem:
@@ -35,8 +69,25 @@ class initium(object):
     Firefox.get_gold = get_gold
 
     def say(self, ChatTab="Location", Text="Uh oh! Something went wrong."):
-        ## Says a message in the given chat tab
-        ## Can print multiple messages by separating with '\n'
+        """
+        This function says a message in the specified chat tab. Multiple messages can be said by separating them with newline characters.
+
+        Do be wary of multiple messages at once tho, as too many sent too quickly can result in a temporary chat ban in-game.
+
+        Args:
+           ChatTab (string) -- Global, Location, Party, Group, or Private (Note, Initium.reply should be used for private). Default is "Location"
+
+           Text (string) -- Actual message to be said in chat. Default is "Uh oh! Something went wrong."
+
+        Returns:
+           Nothing is returned by this function.
+
+        Examples of this function in use:
+
+        >>> Bot.say("Global", "Using Howl is easy!") # "Using Howl is easy!" in Global tab
+        >>> Bot.say("Location", "This Message splits \\n Into two chat messages.") # "This message splits ", " Into two chat messages." both in Location tab
+        >>> Bot.say() # "Uh oh! Something went wrong." in Location tab
+        """
         # Click appropriate chat tab
         for button in self.find_elements_by_class_name("chat_tab"):
             if button.text.lower() == ChatTab.lower():
@@ -50,9 +101,27 @@ class initium(object):
             time.sleep(0.25)
 
     def reply(self, PlayerNameElement=None, Text="Uh oh! Something went wrong."):
-        ## Replies through private chat
-        ## Requires Private chat tab to already be open
-        ## Assumes player name already selected if PlayerNameElement is not given
+        """
+        This replies to a player with a certain message in the Private chat tab. Multiple messages can be said by separating them with newline characters.
+
+        Do be wary of multiple messages at once tho, as too many sent too quickly can result in a temporary chat ban in-game.
+
+        Assumes player name already selected if PlayerNameElement is not given.
+
+        Args:
+           PlayerNameElement (Selenium.WebElement) -- A WebElement object of the link to the players name. I.e., clicking on this would popup the player's profile where players could click "Private Chat" to message the player privately.
+
+           Text (string) -- Actual message to be said to player. Default is "Uh oh! Something went wrong."
+
+        Returns:
+           Nothing is returned by this function.
+
+        Examples of this function in use:
+
+        >>> Bot.reply(PlayerNameElement, "Using Howl is easy!") # "Using Howl is easy!" whispered to whichever player's name is in PlayerNameElement
+        >>> Bot.reply(PlayerNameElement, "This Message splits \\n Into two chat messages.") # "This message splits ", " Into two chat messages." both said to the given player
+        >>> Bot.reply(Text="Something here.") # "Something here" said in private chat, assuming player name was already selected for private chat.
+        """
         # Click player name and then Private Chat
         try:
             PlayerNameElement.click()
@@ -77,7 +146,19 @@ class initium(object):
             time.sleep(0.25)
 
     def update_messages(self, ChatTab="Private"):
-        ## Load messages and return an array of [Authors[], Queries[]]
+        """This function opens the specified chat tab and collects all messages and authors in the chat.
+
+        Args:
+           ChatTab (string) -- Global, Location, Party, Group, or Private (Note, Initium.reply should be used for private). Default is "Private"
+
+        Returns:
+           Results (two-dimensional array) -- A two-dimensional array of [Authors[...], Queries[...]] containing the array of Authors who said which Queries in the specified ChatTab.
+
+        One way to use this function is:
+
+        >>> authors, messages = [], [] # initializes the blank arrays
+        >>> authors, messages = Bot.update_messages("Global") # Fills the arrays appropriatly with chat messages from "Global" tab.
+        """
         ## Would be ideal to return by reference, but alas.
         # Return variables here for scope:
         Authors = []
@@ -114,6 +195,36 @@ class initium(object):
         return [Authors, Queries]
 
     def get_item_stats(self):
+        """This function assumes that an item was clicked in-game by the bot and then parses the popup HTML for relevant item stats.
+
+        Args:
+           None: This function takes no arguments
+
+        Returns:
+           stat_dictionary (dictionary):
+              'Dice Quantity' (int) -- Default 0
+
+              'Dice Sides' (int) -- Default 0
+
+              'Critical Chance' (float) -- Default 0.00
+
+              'Critical Multiplier' (int) -- Default 0
+
+              'Block Chance' (int) -- Default 0
+
+              'Damage Reduction' (int) -- Default 0
+
+              'Dexterity Penalty' (int) -- 0
+
+              'Item Type' (string) -- Default (NoneType) None
+
+        One way to use this function is:
+
+        >>> item_stats = {} # initializes the blank dictionary
+        >>> item_web_element.click() # Click the item so the popup is created and displayed
+        >>> item_stats = Bot.get_item_stats() # Fills the dictionary with all relevant stats
+        >>> block_chance = item_stats['Block Chance'] # Assigns Block Chance value to block_chance variable (now integer)
+        """
         ## Read popup HTML and return a dictionary of all item stats
         stat_dictionary = {
                             'Dice Quantity': 0,
