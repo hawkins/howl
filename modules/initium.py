@@ -18,8 +18,6 @@ class initium(object):
     """
     def get_location(self):
         """
-        ###get_location(self):
-
         This function returns the current location of the bot in the Initium world.
 
         Args:
@@ -46,9 +44,6 @@ class initium(object):
 
     def get_gold(self):
         """
-        ##get_gold(self):
-
-
         This function returns the current gold in the bot's inventory in the Initium game.
 
         Args:
@@ -76,9 +71,6 @@ class initium(object):
 
     def say(self, ChatTab="Location", Text="Uh oh! Something went wrong."):
         """
-        ##say(self, ChatTab="Location", Text="Uh oh! Something went wrong."):
-
-
         This function says a message in the specified chat tab. Multiple messages can be said by separating them with newline characters.
 
         Do be wary of multiple messages at once tho, as too many sent too quickly can result in a temporary chat ban in-game.
@@ -111,9 +103,6 @@ class initium(object):
 
     def reply(self, PlayerNameElement=None, Text="Uh oh! Something went wrong."):
         """
-        ##reply(self, PlayerNameElement=None, Text="Uh oh! Something went wrong."):
-
-
         This replies to a player with a certain message in the Private chat tab. Multiple messages can be said by separating them with newline characters.
 
         Do be wary of multiple messages at once tho, as too many sent too quickly can result in a temporary chat ban in-game.
@@ -159,9 +148,6 @@ class initium(object):
 
     def update_messages(self, ChatTab="Private"):
         """
-        ##update_messages(self, ChatTab="Private"):
-
-
         This function opens the specified chat tab and collects all messages and authors in the chat.
 
         Args:
@@ -212,9 +198,6 @@ class initium(object):
 
     def get_item_stats(self):
         """
-        ##get_item_stats(self):
-
-
         This function assumes that an item was clicked in-game by the bot and then parses the popup HTML for relevant item stats.
 
         Args:

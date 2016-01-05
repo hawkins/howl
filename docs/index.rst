@@ -3,23 +3,27 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to Howl's documentation!
-================================
+Welcome to Howl's documentation
+==================================
 Howl is a python-based bot framework for the web game Initium. Making bots with Howl is easy! Check out the following pages to begin.
+
+General and Module Indices
+--------------------------
+
+* :ref:`genindex`
+* :ref:`modindex`
+
+
 
 Contents:
 
 .. toctree::
+   :hidden:
+   :caption: Table of Contents
    :maxdepth: 2
-   :glob:
+   :numbered:
 
    initium
-   modules/*
-   *
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+   gettingstarted
+   owl
+   records
