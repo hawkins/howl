@@ -99,7 +99,7 @@ class Records(initium.webdriver, initium.initium):
         if "weapon" in paragraph_text:
             score = self.calculate_score_weapon()
         else:
-            if "armor" in paragraph_text:
+            if "armor" in paragraph_text or "shield" in paragraph_text:
                 if "shirt" in paragraph_text:
                     score = self.calculate_score_armor(shirt=True)
                 else:
@@ -283,7 +283,9 @@ if __name__ == "__main__":
     recent_lookup_requests = []
     DEF_MAX_RECENT_REQUESTS = 6
     ## Now let's repopulate the recent requests incase we crash after answering a request
-    reqauth, reqmsg = Bot.update_messages("Global")
+    reqauth, reqmsg = [], []
+    while reqauth == 0 or len(reqauth) == 0:
+        reqauth, reqmsg = Bot.update_messages("Global")
     for each in reqmsg:
         #print("Author: " + reqauth[reqmsg.index(each)] + ". Msg: " + each)
         if "#" in each and "[Bot] Bower" == reqauth[reqmsg.index(each)]:
@@ -319,8 +321,15 @@ if __name__ == "__main__":
         ## Check for item shares
         items = Bot.find_elements_by_class_name("chat-embedded-item")
         # Iterate through each, saving them all
+        score = 0
+        # Get item stats if any
+        try:
+            stats = Bot.get_item_stats()
+        except:
+            stats = None
         for each in items:
-            score = 0
+            last_score = score
+            last_stats = stats
             try:
                 # Click the item
                 link = each.find_elements_by_tag_name("a")[0]
@@ -329,6 +338,10 @@ if __name__ == "__main__":
                 if link.get_attribute("innerHTML") != "Share":
                     link.click()
                     #print(str(Bot.get_item_stats()))
+
+                # Calculate score of popup item
+                score = Bot.score_item()
+
             except ElementNotVisibleException as e:
                 #logger.error(str(e))
                 #logger.warning("Item not visible, checking for lookup requests instead.")
@@ -338,9 +351,34 @@ if __name__ == "__main__":
                 logger.error("StaleElementReferenceException occurred! ! ! !")
                 logger.error("Checking for lookup requests instead.")
                 break
+            except Exception as e:
+                logger.error(str(e))
+                break
 
-            # Calculate score of popup item
-            score = Bot.score_item()
+            ## Attempting to filter issues
+            # Check scores
+            if last_score == score:
+                #oops we broke it. skip item
+                continue
+            if score != 0:
+                # Do we have stats on the item?
+                stats = Bot.get_item_stats()
+                if not stats['Block Chance'] and not stats['Dice Quantity'] and not stats['Dice Sides']:
+                    # We don't have dice or block chance, so skip it
+                    continue
+            # Now check item stats
+            start = time.time()
+            escape = False
+            while stats == last_stats:
+                stats = Bot.get_item_stats()
+                # Make sure we dont run too long
+                if time.time() - start >= 15:
+                    logger.warning("Took too long to load stats! Skipping item.")
+                    score = 0
+                    escape = True
+                    break
+            if escape:
+                continue
             if float(score) <= 2.0 or float(score) >= 400.0: # 1.64 default, 400 never been seen
                 # Inspeceed item was not a scorable item, so skip to next item
                 continue
@@ -366,6 +404,7 @@ if __name__ == "__main__":
             else:
                 if result > 0:
                     # Whisper author
+                    pass
                     Bot.reply(author_element, "Your Item(" + itemID + ") is the #" + str(result+1) + "in the game! Score: " + "{:10.2f}".format(score) + "!" )
 
         ## Listen for requests in Global chat

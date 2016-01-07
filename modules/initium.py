@@ -156,6 +156,8 @@ class initium(object):
         Returns:
            Results (two-dimensional array) -- A two-dimensional array of [Authors[...], Queries[...]] containing the array of Authors who said which Queries in the specified ChatTab.
 
+           OR Results (int) -- 0. Returns 0 if unable to load messages.
+
         One way to use this function is:
 
         >>> authors, messages = [], [] # initializes the blank arrays
@@ -239,9 +241,6 @@ class initium(object):
                             'Dexterity Penalty': 0,
                             'Item Type': None
                             }
-        # Sleep 2 seconds for page load
-        time.sleep(2)
-
         ## First determine what type of item it is
         # Check <p> tag in popup
         paragraph_element = self.find_elements_by_xpath('//div[contains(@class,"cluetip-inner") and contains(@class, "ui-widget-content") and contains(@class, "ui-cluetip-content")]/div[@class="main-page"]/p')[0]

@@ -1,6 +1,6 @@
 #!/bin/bash
 cd ~/howl/modules
-./records.py $*
+./records.py -c '../cfgb.json' $*
 while [ 1 ]
 do
     secs=$((3))
@@ -11,5 +11,5 @@ do
         : $((secs--))
     done
 
-    ./records.py -l true $*
+    ./records.py -c '../cfgb.json' -l true $*
 done
