@@ -141,7 +141,7 @@ if __name__ == "__main__":
                 logger.info("Query received from " + authors[0] + ": " + q)
 
                 # Get a WebElement of the player who requested Owl
-                client = Owl.find_elements_by_xpath('//div[@id="chat_messages_PrivateChat"]/div')[0].find_elements_by_class_name("chatMessage-text")[0]
+                client = Owl.find_elements_by_xpath('//div[@id="chat_messages_PrivateChat"]/div')[0].find_elements_by_class_name("chatMessage-private-nickname")[0]
 
                 if "find" in q.lower():
                     # Identify the item

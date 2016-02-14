@@ -123,17 +123,18 @@ class initium(object):
         >>> Bot.reply(PlayerNameElement, "This Message splits \\n Into two chat messages.") # "This message splits ", " Into two chat messages." both said to the given player
         >>> Bot.reply(Text="Something here.") # "Something here" said in private chat, assuming player name was already selected for private chat.
         """
-        # Click player name and then Private Chat
+        # Click player name
         try:
             PlayerNameElement.click()
-            loaded = False
-            while not loaded:
-                try:
-                    self.find_elements_by_class_name("mini-window-header-split")[0].find_element_by_link_text("Private Chat").click() # Click "Private Chat"
-                    loaded = True
-                except IndexError:
-                    pass
-            loaded = False
+            # ## Previously:
+            # # loaded = False
+            # # while not loaded:
+            # #     try:
+            # #         self.find_elements_by_class_name("mini-window-header-split")[0].find_element_by_link_text("Private Chat").click() # Click "Private Chat"
+            # #         loaded = True
+            # #     except IndexError:
+            # #         pass
+            # # loaded = False
         except:
             # Assumes player already in private chat
             pass
@@ -184,11 +185,15 @@ class initium(object):
 
                 for each in Messages:
                     try:
-                        Authors.append(each.find_elements_by_class_name("chatMessage-text")[0].text)
-                        Queries.append(each.find_elements_by_class_name("chatMessage-text")[1].text)
-                    except:
-                        print("An exception occurred, closing...")
-                        return 0 # return 0 to terminate the module (TyoeError: int is not iterable)
+                        if ChatTab.lower() == "private":
+                            Authors.append(each.find_elements_by_class_name("chatMessage-private-nickname")[0].text)
+                            Queries.append(each.find_elements_by_class_name("chatMessage-text")[0].text)
+                        else:
+                            Authors.append(each.find_elements_by_class_name("chatMessage-text")[0].text)
+                            Queries.append(each.find_elements_by_class_name("chatMessage-text")[1].text)
+                    except Exception as e:
+                        print("Error: " + str(e))
+                        return 0 # return 0 to terminate the module (TypeError: int is not iterable)
                 Queries[0] # Generates IndexError if messages not yet loaded
                 loaded = True
             except:
