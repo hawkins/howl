@@ -246,7 +246,7 @@ if __name__ == "__main__":
                                         items.append(re.sub('(?!\s)[\W_]', '', current_item))
                                         goal_id.append(i.find_elements_by_tag_name("a")[0].get_attribute("rel").split("itemId=")[1])
                                         goal_price.append(i.find_elements_by_xpath("..")[0].find_elements_by_tag_name("span")[0].text) # Price is in span found in parent of i, cheat and use ".." notation XPath
-                                        goal_buy.append(i.find_elements_by_tag_name("a")[1].get_attribute("href"))
+                                        goal_buy.append(i.find_elements_by_tag_name("a")[1].get_attribute("onclick"))
 
                         # If our goal is not met
                         if not any(goal in i for i in items):
@@ -264,7 +264,10 @@ if __name__ == "__main__":
                             # PM player
                             j = 0
                             while (result_counter != wanted) & (j > 0-len(goal_id)):
-                                Owl.reply(client, "Found Item(" + goal_id[j] + ") for " + goal_price[j] +"g. [Buy Now](" + goal_buy[j] + ")")
+                                # debug
+                                print(result_counter, "\n", wanted, "\n", j, "\n", str(0-len(goal_id)))
+                                print(str(goal_id[j]), "\n", str(goal_price[j]), "\n", str(goal_buy[j]))
+                                Owl.reply(client, "Found Item(" + goal_id[j] + ") for " + goal_price[j] +"g. [Buy Now](" + goal_buy[j])
                                 j -= 1
                                 result_counter += 1
                                 time.sleep(2) # chat ban prevention
