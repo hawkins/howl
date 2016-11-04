@@ -44,21 +44,7 @@ class Owl_Bot(initium.webdriver, initium.initium):
         super().__init__()
 
         logger.info("Connecting to Initium")
-        self.get("http://www.playinitium.com")
-
-        logger.info("Logging in as {0}".format(self.cfg["uname"]))
-        # Enter email
-        login = self.find_element_by_name("email")
-        login.send_keys(self.cfg["email"])
-
-        # Enter pw
-        login = self.find_element_by_name("password")
-        login.send_keys(self.cfg["pw"])
-
-        for button in self.find_elements_by_class_name(
-                "main-button"):
-            if button.text == "Login":
-                button.click()
+        self.login(self.cfg['email'], self.cfg['pw'])
 
     def _parse_config(self):
         logger.info('Parsing command line arguments')

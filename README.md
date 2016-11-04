@@ -3,24 +3,29 @@
 
 A python based bot framework for the browser game [initium](http://playinitium.com/) which interfaces with players through various chat channels.
 
-Do note this project is a work in progress, and as such may be a straight-up mess at any point in time. Code will be refined when resource constraints are met or when all features are stable.
 
-##Modules
+## Modules
+
 Currently this project includes the following modules:
 - Owl - a shop-searching bot for providing players with requested items found in the local merchant booths.
 - Auction - a bot for selling items to players for the highest price.
 - and more to come! Feel free to submit your own in a pull request ;)
 
-##Dependencies
+
+## Dependencies
+
 This project was written using python3.4, and uses a firefox webdriver and selenium to intertact with dynamic webpages. This can be done in a headless style, which requires pyvirtualdisplay and xvfb.
+
 ```
 sudo apt-get install firefox xvfb
 sudo pip3 install selenium pytz tzlocal pyvirtualdisplay
 ```
-This project is currently developed and supported on Ubuntu 14.04.
-Originally, the Owl module was tested on Arch linux in its early stages, but is no longer supported on Arch and is thus no longer guaranteed to work out-of-the-box.
 
-##Config File
+This project is currently developed and supported on Ubuntu 14.04.
+
+
+## Config File
+
 You will need a config in the directory you run the bot.  It must be named `cfg.json`
 
 Example `cfg.json`

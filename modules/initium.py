@@ -1,12 +1,11 @@
 #!/usr/bin/python3.4
 # System
-from selenium.webdriver import Firefox
+from selenium.webdriver import Chrome as webdriver
 from selenium.common.exceptions import NoSuchElementException
 import time
 
 # Let others know what class we're monkey patching
 # They can extend initum.webdriver then
-webdriver = Firefox
 
 class initium(object):
     """
@@ -16,6 +15,37 @@ class initium(object):
 
     >>> class Bot(initium.webdriver, initium.initium): # Class definition line for Bot implementing Howl framework
     """
+    def login(self, email, pw):
+        """
+        This function logs the player in to the Initium world.
+
+        Args:
+            email (string) -- Username to log in with
+            pw (string) -- Password to log in with
+
+        Returns:
+            None: This function return is void
+        """
+        # Load front page
+        self.get('http://www.playinitium.com')
+
+        # Click login signup switch
+        self.find_element_by_class_name('login-signup-switch').find_element_by_tag_name('a').click()
+
+        # Enter email
+        login = self.find_elements_by_name("email")[1]
+        login.send_keys(self.cfg["email"])
+
+        # Enter password
+        login = self.find_elements_by_name("password")[1]
+        login.send_keys(self.cfg["pw"])
+
+        # Click login
+        for button in self.find_elements_by_class_name("big-link"):
+            if button.text == "Login":
+                button.click()
+                break
+
     def get_location(self):
         """
         This function returns the current location of the bot in the Initium world.
@@ -39,7 +69,6 @@ class initium(object):
         except NoSuchElementException:
             # Not found
             return "Unknown Location"
-    Firefox.get_location = get_location
 
 
     def get_gold(self):
@@ -67,7 +96,6 @@ class initium(object):
         except NoSuchElementException:
             # Not found
             pass
-    Firefox.get_gold = get_gold
 
     def say(self, ChatTab="Location", Text="Uh oh! Something went wrong."):
         """
@@ -126,15 +154,6 @@ class initium(object):
         # Click player name
         try:
             PlayerNameElement.click()
-            # ## Previously:
-            # # loaded = False
-            # # while not loaded:
-            # #     try:
-            # #         self.find_elements_by_class_name("mini-window-header-split")[0].find_element_by_link_text("Private Chat").click() # Click "Private Chat"
-            # #         loaded = True
-            # #     except IndexError:
-            # #         pass
-            # # loaded = False
         except:
             # Assumes player already in private chat
             pass
@@ -155,53 +174,49 @@ class initium(object):
            ChatTab (string) -- Global, Location, Party, Group, or Private (Note, Initium.reply should be used for private). Default is "Private"
 
         Returns:
-           Results (two-dimensional array) -- A two-dimensional array of [Authors[...], Queries[...]] containing the array of Authors who said which Queries in the specified ChatTab.
+           Results (two-dimensional array) -- A two-dimensional array of [Authors[...], Texts[...], Times[...]] containing the array of Authors who said which Texts at what Times in the specified ChatTab.
 
            OR Results (int) -- 0. Returns 0 if unable to load messages.
 
         One way to use this function is:
 
-        >>> authors, messages = [], [] # initializes the blank arrays
-        >>> authors, messages = Bot.update_messages("Global") # Fills the arrays appropriatly with chat messages from "Global" tab.
+        >>> authors, messages, times = [], [], [] # initializes the blank arrays
+        >>> authors, messages, times = Bot.update_messages("Global") # Fills the arrays appropriatly with chat messages from "Global" tab.
         """
         ## Would be ideal to return by reference, but alas.
         # Return variables here for scope:
         Authors = []
-        Queries = []
-        # Click appropriate chat tab
-        for button in self.find_elements_by_class_name("chat_tab"):
-            if ChatTab.lower() in button.text.lower():
-                button.click()
-        # Rebuild list of PMs, in while & try block to ensure success once loaded
-        loaded = False
-        while not loaded:
-            try:
-                if ChatTab.lower() == "global":
-                    Messages = self.find_elements_by_xpath('//div[@id="chat_messages_GlobalChat"]/div')
-                if ChatTab.lower() == "location":
-                    Messages = self.find_elements_by_xpath('//div[@id="chat_messages_LocationChat"]/div')
-                if ChatTab.lower() == "private":
-                    Messages = self.find_elements_by_xpath('//div[@id="chat_messages_PrivateChat"]/div')
+        Texts = []
+        Times = []
 
+        # Raise exception if illegal chat tab requested
+        if ChatTab not in ['Global', 'Private', 'Location', 'Group', 'Party']:
+            raise Exception('Error: illegal chat tab', ChatTab)
+
+        # Click appropriate chat tab
+        self.find_element_by_id(ChatTab + 'Chat_tab').click()
+
+        # Rebuild list of PMs in while loop until messages loaded
+        while True:
+            Messages = self.find_elements_by_xpath('//div[@id="chat_messages_%sChat"]/div' % ChatTab)
+
+            # If messages were found, iterate over them
+            if Messages:
                 for each in Messages:
-                    try:
-                        if ChatTab.lower() == "private":
-                            Authors.append(each.find_elements_by_class_name("chatMessage-private-nickname")[0].text)
-                            Queries.append(each.find_elements_by_class_name("chatMessage-text")[0].text)
-                        else:
-                            Authors.append(each.find_elements_by_class_name("chatMessage-text")[0].text)
-                            Queries.append(each.find_elements_by_class_name("chatMessage-text")[1].text)
-                    except Exception as e:
-                        print("Error: " + str(e))
-                        return 0 # return 0 to terminate the module (TypeError: int is not iterable)
-                Queries[0] # Generates IndexError if messages not yet loaded
-                loaded = True
-            except:
-                pass
-        loaded = False
+                    # Skip greeting messages
+                    if "A new player has just joined Initium" in each.text:
+                        continue
+
+                    # Add to Authors and Texts
+                    Times.append(each.find_elements_by_tag_name('span')[0].text)
+                    Authors.append(each.find_elements_by_tag_name('span')[1].text)
+                    Texts.append(each.find_elements_by_tag_name('span')[2].text[2:])
+
+                # Escape from while loop
+                break
 
         # Wish we could return by reference more simply
-        return [Authors, Queries]
+        return [Authors, Texts, Times]
 
     def get_item_stats(self):
         """
@@ -245,7 +260,7 @@ class initium(object):
                             'Damage Reduction': 0,
                             'Dexterity Penalty': 0,
                             'Item Type': None
-                            }
+                          }
         ## First determine what type of item it is
         # Check <p> tag in popup
         paragraph_element = self.find_elements_by_xpath('//div[contains(@class,"cluetip-inner") and contains(@class, "ui-widget-content") and contains(@class, "ui-cluetip-content")]/div[@class="main-page"]/p')[0]
