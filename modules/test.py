@@ -47,16 +47,13 @@ class Bot(initium.webdriver, initium.initium):
 
     def _parse_config(self):
         logger.info('Parsing command line arguments')
-        self._parser = argparse.ArgumentParser(description="Owl - A Python based bot for Initium - http://playinitium.com")
+        self._parser = argparse.ArgumentParser(description="A Python based bot for Initium - http://playinitium.com")
         self._parser.add_argument("-c", "--config", dest="config_file", default="../cfg.json",
                                   help="Configuration to use (default=../cfg.json)")
-        self._parser.add_argument("-d", "--do_chat", dest="do_chat", action="store_true",
-                                  help="Handle commands in each rooms local chat")
-        self._parser.add_argument('-m', '--map', dest='map_file', default='map.json',
-                                  help='Map file to use (default=map.json)')
-        self._parser.add_argument('-l', '--headless', help='Run in headless operation mode if HEADLESS=true/True/T')
+        self._parser.add_argument('-l', '--headless', action="store_true",
+                                  help='Run in headless operation mode')
         self.args = self._parser.parse_args()
-        if self.args.headless == 'true' or self.args.headless == 'True' or self.args.headless == 'T' or self.args.headless == 'TRUE':
+        if self.args.headless:
             display = Display(visible=0, size=(800,600))
             display.start()
 
@@ -78,13 +75,37 @@ if __name__ == "__main__":
     # Initialize bot
     bot = Bot()
 
-    # Test location
-    logger.info("Current Location: " + bot.get_location())
+    # # Test location
+    # logger.info("Current Location: " + bot.get_location())
 
-    # Test gold
-    logger.info("Current Gold: " + bot.get_gold())
+    # # Test gold
+    # logger.info("Current Gold: " + bot.get_gold())
 
-    # Test messages
-    auths, texts, times = bot.update_messages("Global")
-    for each in texts:
-        print(each)
+    # # Test say
+    # logger.info("Saying \'Hello from Howl 2.0!\' in local chat")
+    # bot.say('Hello from Howl 2.0!', 'Location')
+
+    # # Test messages
+    # logger.info('Loading Global chat messages...')
+    # messages = bot.get_chat_messages('Global')
+    # print('%s %s: %s' % (messages[0]['time'], messages[0]['author'], messages[0]['text']))
+
+    # # Test reply
+    # logger.info('Replying in private chat to [Dev] Rade')
+    # bot.reply('Testing private message', '[Dev] Rade')
+
+    # # Test getting item stats via inventory
+    # bot.send_keypresses('i')
+    # while True:
+    #     try:
+    #         e = bot.find_element_by_xpath("//div[@class='main-item-container']//a[1]")
+    #         print(bot.get_item_stats(e))
+    #         # e.click()
+    #     except selenium.common.exceptions.NoSuchElementException as e:
+    #         print("Uh oh")
+    #         print(e)
+    #         time.sleep(1)
+
+    # Exit the webdriver
+    logger.info('Closing webdriver')
+    bot.quit()

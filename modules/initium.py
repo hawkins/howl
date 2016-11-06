@@ -1,11 +1,7 @@
 #!/usr/bin/python3.4
-# System
 from selenium.webdriver import Chrome as webdriver
 from selenium.common.exceptions import NoSuchElementException
 import time
-
-# Let others know what class we're monkey patching
-# They can extend initum.webdriver then
 
 class initium(object):
     """
@@ -95,235 +91,267 @@ class initium(object):
                         return stats[1]
         except NoSuchElementException:
             # Not found
-            pass
+            return -1
 
-    def say(self, ChatTab="Location", Text="Uh oh! Something went wrong."):
+    def say(self, text, chat_tab="Location", delay=True):
         """
         This function says a message in the specified chat tab. Multiple messages can be said by separating them with newline characters.
 
         Do be wary of multiple messages at once tho, as too many sent too quickly can result in a temporary chat ban in-game.
 
         Args:
-           ChatTab (string) -- Global, Location, Party, Group, or Private (Note, Initium.reply should be used for private). Default is "Location"
+            text (string) -- Actual message to be said in chat.
 
-           Text (string) -- Actual message to be said in chat. Default is "Uh oh! Something went wrong."
+            chat_tab (string) -- Global, Location, Party, Group, or Private (Note, Initium.reply should be used for private). Default is "Location"
+
+            delay (boolean) -- Delay between sending messages or not. Default is True
 
         Returns:
-           Nothing is returned by this function.
+            Nothing is returned by this function.
 
         Examples of this function in use:
 
-        >>> Bot.say("Global", "Using Howl is easy!") # "Using Howl is easy!" in Global tab
-        >>> Bot.say("Location", "This Message splits \\n Into two chat messages.") # "This message splits ", " Into two chat messages." both in Location tab
-        >>> Bot.say() # "Uh oh! Something went wrong." in Location tab
+        >>> Bot.say("Using Howl is easy!", "Global") # "Using Howl is easy!" in Global tab
+        >>> Bot.say("This Message splits \\n Into two chat messages.", "Location") # "This message splits ", " Into two chat messages." both in Location tab
         """
         # Click appropriate chat tab
         for button in self.find_elements_by_class_name("chat_tab"):
-            if button.text.lower() == ChatTab.lower():
+            if chat_tab.lower() in button.text.lower():
                 button.click()
+                break
+
         # Split Text into multiple lines by \n
-        Texts = Text.split('\n')
-        # Reply each text from Texts
-        for each in Texts:
+        texts = text.split('\n')
+
+        # Send each text from Texts
+        for each in texts:
             self.find_element_by_id("chat_input").send_keys(each)
             self.find_element_by_id("chat_submit").click()
-            time.sleep(0.25)
 
-    def reply(self, PlayerNameElement=None, Text="Uh oh! Something went wrong."):
+            # Delay if requested
+            if delay:
+                time.sleep(0.25)
+
+    def reply(self, text, player=None, delay=True):
         """
         This replies to a player with a certain message in the Private chat tab. Multiple messages can be said by separating them with newline characters.
 
         Do be wary of multiple messages at once tho, as too many sent too quickly can result in a temporary chat ban in-game.
 
-        Assumes player name already selected if PlayerNameElement is not given.
+        Assumes player name already selected if player is not given.
 
         Args:
-           PlayerNameElement (Selenium.WebElement) -- A WebElement object of the link to the players name. I.e., clicking on this would popup the player's profile where players could click "Private Chat" to message the player privately.
+            text (string) -- Actual message to be said to player.
 
-           Text (string) -- Actual message to be said to player. Default is "Uh oh! Something went wrong."
+            player (string) -- Target player's name.
+
+            delay (boolean) -- Delay between sending messages or not. Default is True
 
         Returns:
-           Nothing is returned by this function.
+            Nothing is returned by this function.
 
         Examples of this function in use:
 
-        >>> Bot.reply(PlayerNameElement, "Using Howl is easy!") # "Using Howl is easy!" whispered to whichever player's name is in PlayerNameElement
-        >>> Bot.reply(PlayerNameElement, "This Message splits \\n Into two chat messages.") # "This message splits ", " Into two chat messages." both said to the given player
-        >>> Bot.reply(Text="Something here.") # "Something here" said in private chat, assuming player name was already selected for private chat.
+        >>> Bot.reply("Using Howl is easy!", "[Dev] Rade") # "Using Howl is easy!" whispered to whichever player's name is in PlayerNameElement
+        >>> Bot.reply("This Message splits \\n Into two chat messages.", "Bella") # "This message splits ", " Into two chat messages." both said to the given player
+        >>> Bot.reply("Something here.") # "Something here" said in private chat, assuming player name was already selected for private chat.
         """
-        # Click player name
-        try:
-            PlayerNameElement.click()
-        except:
-            # Assumes player already in private chat
+        # Click appropriate chat tab
+        for button in self.find_elements_by_class_name("chat_tab"):
+            if 'private' in button.text.lower():
+                button.click()
+                break
+
+        # Wait until messages have loaded
+        while not self.is_chat_tab_loaded('Private'):
             pass
 
-        # Split Text into multiple lines by \n
-        Texts = Text.split('\n')
-        # Reply each text from Texts
-        for each in Texts:
-            self.find_element_by_id("chat_input").send_keys(each)
-            self.find_element_by_id("chat_submit").click()
-            time.sleep(0.25)
+        # Gather messages
+        messages = self.find_elements_by_xpath('//div[@id="chat_messages_PrivateChat"]/div')
 
-    def update_messages(self, ChatTab="Private"):
+        # Click player name
+        found = False
+        for message in messages:
+            # Get author of message
+            author = message.find_element_by_class_name('chatMessage-private-nickname')
+
+            # If author matches target
+            if author.text == player:
+                # Click player name element
+                author.click()
+
+                # Delay for server
+                time.sleep(1)
+
+                found = True
+                break
+
+        # Raise error if player not found
+        if not found:
+            raise Exception('Unable to locate player %s in private chat authors' % player)
+
+        # Split Text into multiple lines by \n
+        texts = text.split('\n')
+
+        # Reply each text from Texts
+        for each in texts:
+            self.find_element_by_id('chat_input').send_keys(each)
+            self.find_element_by_id('chat_submit').click()
+
+            # Delay if requested
+            if delay:
+                time.sleep(0.25)
+
+    def get_chat_messages(self, chat_tab='Private'):
         """
         This function opens the specified chat tab and collects all messages and authors in the chat.
 
         Args:
-           ChatTab (string) -- Global, Location, Party, Group, or Private (Note, Initium.reply should be used for private). Default is "Private"
+           chat_tab (string) -- Global, Location, Party, Group, or Private. Default is "Private"
 
         Returns:
-           Results (two-dimensional array) -- A two-dimensional array of [Authors[...], Texts[...], Times[...]] containing the array of Authors who said which Texts at what Times in the specified ChatTab.
-
-           OR Results (int) -- 0. Returns 0 if unable to load messages.
+           messages (array) -- An array of dictionaries containing keys 'time', 'author', 'text', 'channel'.
 
         One way to use this function is:
 
-        >>> authors, messages, times = [], [], [] # initializes the blank arrays
-        >>> authors, messages, times = Bot.update_messages("Global") # Fills the arrays appropriatly with chat messages from "Global" tab.
+        messages = Bot.update_messages("Global")
         """
-        ## Would be ideal to return by reference, but alas.
-        # Return variables here for scope:
-        Authors = []
-        Texts = []
-        Times = []
+        # Return variable here for scope:
+        messages = []
 
         # Raise exception if illegal chat tab requested
-        if ChatTab not in ['Global', 'Private', 'Location', 'Group', 'Party']:
-            raise Exception('Error: illegal chat tab', ChatTab)
+        if chat_tab not in ['Global', 'Private', 'Location', 'Group', 'Party']:
+            raise Exception('Error: illegal chat tab %s. Must be \'Global\', \'Location\', \'Party\', \'Private\', ' % chat_tab)
 
         # Click appropriate chat tab
-        self.find_element_by_id(ChatTab + 'Chat_tab').click()
+        self.find_element_by_id(chat_tab + 'Chat_tab').click()
 
-        # Rebuild list of PMs in while loop until messages loaded
-        while True:
-            Messages = self.find_elements_by_xpath('//div[@id="chat_messages_%sChat"]/div' % ChatTab)
+        # Wait until messages are loaded
+        while not self.is_chat_tab_loaded(chat_tab):
+            pass
 
-            # If messages were found, iterate over them
-            if Messages:
-                for each in Messages:
-                    # Skip greeting messages
-                    if "A new player has just joined Initium" in each.text:
-                        continue
+        message_elements = self.find_elements_by_xpath('//div[@id="chat_messages_%sChat"]/div' % chat_tab)
 
-                    # Add to Authors and Texts
-                    Times.append(each.find_elements_by_tag_name('span')[0].text)
-                    Authors.append(each.find_elements_by_tag_name('span')[1].text)
-                    Texts.append(each.find_elements_by_tag_name('span')[2].text[2:])
+        # If messages were found, iterate over them
+        if message_elements:
+            for each in message_elements:
+                # Skip greeting messages
+                if "A new player has just joined Initium" in each.text:
+                    continue
 
-                # Escape from while loop
-                break
+                # Add message
+                if chat_tab == 'Private':
+                    msg = { 'time': each.find_elements_by_tag_name('span')[0].text,
+                            'author': each.find_element_by_class_name('chatMessage-private-nickname').text,
+                            'text': each.find_element_by_class_name('chatMessage-text').text.split('-> ', 1)[1],
+                            'channel': chat_tab}
+                else:
+                    msg = { 'time': each.find_elements_by_tag_name('span')[0].text,
+                            'author': each.find_elements_by_tag_name('span')[1].text,
+                            'text': each.find_elements_by_tag_name('span')[2].text[2:],
+                            'channel': chat_tab}
 
-        # Wish we could return by reference more simply
-        return [Authors, Texts, Times]
+                messages.append(msg)
 
-    def get_item_stats(self):
+
+        # Return a list of 3-item tuples
+        return messages
+        return list(zip(authors, texts, times))
+
+    def get_item_stats(self, element=None):
         """
-        This function assumes that an item was clicked in-game by the bot and then parses the popup HTML for relevant item stats.
+        This function parses the popup HTML for relevant item stats.
+        Optionally receives an argument `element` to click before loading stats, otherwise assumes an item popup is opened.
 
         Args:
-           None: This function takes no arguments
+            element (selenium.WebElement) -- Optionally click this element to load its item stats
 
         Returns:
-           stat_dictionary (dictionary):
-              'Dice Quantity' (int) -- Default 0
-
-              'Dice Sides' (int) -- Default 0
-
-              'Critical Chance' (float) -- Default 0.00
-
-              'Critical Multiplier' (int) -- Default 0
-
-              'Block Chance' (int) -- Default 0
-
-              'Damage Reduction' (int) -- Default 0
-
-              'Dexterity Penalty' (int) -- 0
-
-              'Item Type' (string) -- Default (NoneType) None
+            stats (dictionary) -- A mapping of string keys to their respective stats. Empty if no popup is open
 
         One way to use this function is:
 
-        >>> item_stats = {} # initializes the blank dictionary
-        >>> item_web_element.click() # Click the item so the popup is created and displayed
-        >>> item_stats = Bot.get_item_stats() # Fills the dictionary with all relevant stats
-        >>> block_chance = item_stats['Block Chance'] # Assigns Block Chance value to block_chance variable (now integer)
+        >>> item_stats = Bot.get_item_stats(item_web_element) # Fills the dictionary with all relevant stats
         """
-        ## Read popup HTML and return a dictionary of all item stats
-        stat_dictionary = {
-                            'Dice Quantity': 0,
-                            'Dice Sides': 0,
-                            'Critical Chance': 0.00,
-                            'Critical Multiplier': 0,
-                            'Block Chance': 0,
-                            'Damage Reduction': 0,
-                            'Dexterity Penalty': 0,
-                            'Item Type': None
-                          }
-        ## First determine what type of item it is
-        # Check <p> tag in popup
-        paragraph_element = self.find_elements_by_xpath('//div[contains(@class,"cluetip-inner") and contains(@class, "ui-widget-content") and contains(@class, "ui-cluetip-content")]/div[@class="main-page"]/p')[0]
-        #paragraph_element = paragraph_element.find_elements_by_class_name("main-page")[0].find_elements_by_tag_name("p")[0]
-        paragraph_text = paragraph_element.get_attribute("innerHTML").lower()
-        # Weapon or Armor?
-        if "weapon" in paragraph_text:
-            stat_dictionary['Item Type'] = "Weapon"
-        else:
-            if "armor" in paragraph_text:
-                if "shirt" in paragraph_text:
-                    stat_dictionary['Item Type'] = "Shirt Armor"
-                else:
-                    stat_dictionary['Item Type'] = "Armor"
-            else:
-                if "shield" in paragraph_text:
-                    stat_dictionary['Item Type'] = "Shield"
-                else:
-                    stat_dictionary['Item Type'] = "Non-equipment"
-                    # If it is not equipment then this function is useless.
-                    return
+        # Dictionary to return
+        stats = {}
 
-        # Build stat list
-        elements = self.find_elements_by_class_name("main-item-subnote")
+        # Click the element if provided
+        if element:
+            element.click()
 
-        ## Armor Stats
-        if "Armor" in stat_dictionary['Item Type'] or "Shield" in stat_dictionary['Item Type']:
-            ## Try to solve block chance
-            try:
-                stat_dictionary['Block Chance'] = int(elements[0].get_attribute("innerHTML").split("%")[0])
-            except Exception as e:
-                print("Error: " + str(e))
-            ## Try to solve damage Reduction
-            try:
-                stat_dictionary['Damage Reduction'] = int(elements[1].get_attribute("innerHTML"))
-            except Exception as e:
-                print("Error: " + str(e))
-            ## Try to solve dexterity penalty
-            try:
-                stat_dictionary['Dexterity Penalty'] = int(elements[2].get_attribute("innerHTML").split("%")[0])
-            except Exception as e:
-                print("Error: " + str(e))
+        # Wait until item popup loads
+        while not self.is_item_popup_open():
+            pass
 
-        ## Weapon Stats
-        if "Weapon" in stat_dictionary['Item Type']:
-            ## Try to solve dice quantity
-            try:
-                stat_dictionary['Dice Quantity'] = int(elements[0].get_attribute("innerHTML").split("D")[0])
-            except Exception as e:
-                print("Error: " + str(e))
-            ## Try to solve dice sides
-            try:
-                stat_dictionary['Dice Sides'] = int(elements[0].get_attribute("innerHTML").split("D")[1])
-            except Exception as e:
-                print("Error: " + str(e))
-            ## Try to solve critical chance
-            try:
-                stat_dictionary['Critical Chance'] = float(elements[1].get_attribute("innerHTML").split("%")[0])
-            except Exception as e:
-                print("Error: " + str(e))
-            ## Try to solve critical Multiplier
-            try:
-                stat_dictionary['Critical Multiplier'] = float(elements[2].get_attribute("innerHTML").split("x")[0])
-            except Exception as e:
-                print("Error: " + str(e))
-        return stat_dictionary
+        # Load all item stat elements
+        elements = self.find_elements_by_class_name('item-popup-field')
+
+        # First item is name
+        stats['name'] = elements[0].find_element_by_tag_name('div').text
+
+        # Iterate over all
+        for stat_element in elements:
+            name = stat_element.get_attribute('name')
+            if name:
+                stats[name] = stat_element.find_element_by_tag_name('div').text
+
+        return stats
+
+    def is_item_popup_open(self):
+        """
+        Checks for existance of an item popup with stats visible.
+
+        Args:
+            None - This function receives no arguments
+
+        Returns:
+            result (boolean) -- True if an item popup is loaded
+        """
+        try:
+            # Attempt to find elements by class name
+            elements = self.find_elements_by_class_name('item-popup-field')
+
+            # Return true if text is loaded
+            if elements[0].text != '':
+                return True
+        except:
+            # If an exception occurred, item not open
+            return False
+
+    def is_chat_tab_loaded(self, chat_tab='Location'):
+        """
+        Checks for existance of messages in the given chat tab.
+
+        Args:
+            chat_tab (strng) -- The chat tab to select. Default is \'Location\'
+
+        Returns:
+            result (boolean) -- True if an item popup is loaded
+        """
+        # Raise exception if illegal chat tab requested
+        if chat_tab not in ['Global', 'Private', 'Location', 'Group', 'Party']:
+            raise Exception('Error: illegal chat tab %s. Must be \'Global\', \'Location\', \'Party\', \'Private\', ' % chat_tab)
+
+        try:
+            # Attempt to find elements
+            messages = self.find_elements_by_xpath('//div[@id="chat_messages_%sChat"]/div' % chat_tab)
+        except:
+            # If an exception occurred, messages were not found so return False
+            return False
+
+
+        # If no exception occurred, messages were found so return True
+        return True
+
+    def send_keypresses(self, keys):
+        """
+        Send keys to the page.
+
+        Args:
+            keys (string) -- String of keys to be pressed
+
+        Returns:
+            Nothing is returned by this function
+        """
+        self.find_element_by_xpath('//body').send_keys(keys)
